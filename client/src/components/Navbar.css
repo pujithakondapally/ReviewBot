@@ -1,0 +1,74 @@
+/* Navbar styles */
+.navbar {
+    background: transparent; /* Transparent background to match overall gradient */
+    padding: 10px 20px;
+    transition: background 0.5s ease;
+}
+
+.navbar-brand {
+    font-family: 'Poppins', sans-serif;
+    font-size: 26px;
+    font-weight: bold;
+    color: black;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link {
+    font-family: 'Roboto', sans-serif;
+    font-size: 18px;
+    color: black;
+    padding: 10px 20px;
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: black;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+.navbar-nav .dropdown-menu .dropdown-item {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    color: #333333;
+    padding: 10px;
+    transition: background 0.3s ease;
+}
+
+.navbar-nav .dropdown-menu .dropdown-item:hover {
+    background-color: #F4A261;
+    color: #FFFFFF;
+}
+
+/* Body gradient background */
+body {
+    background: linear-gradient(135deg, #ceb296, #d6a175, #c79168); /* Light Peach to Warm Orange gradient */
+    color: #333333;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Container styles */
+.container {
+    padding: 30px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* Home Page Styling */
+
+.btn:hover {
+    background-color: #F4A261;
+    color: #FFFFFF;
+    transform: scale(1.05);
+}
+
+/* Footer styles */
+.footer {
+    background: #E76F51;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 20px;
+}
