@@ -11,8 +11,15 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    // Handle login functionality
-  };
+    try {
+      const response = await axios.post('http://localhost:5000/login', { email, password });
+      setSuccess(response.data.message);
+      setError('');
+    } catch (err) {
+      setError('Login failed');
+      setSuccess('');
+    }
+  };  
 
   return (
     <div className="login-container">

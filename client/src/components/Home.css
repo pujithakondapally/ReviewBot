@@ -37,19 +37,19 @@
 
 .robot-image {
     flex: 1;
-    width: 150px; /* Smaller image size */
+    width: 150px;
     max-width: 70%;
 }
 
-/* Button styles */
 .btn {
     font-family: 'Roboto', sans-serif;
     font-size: 18px;
     padding: 10px 20px;
     border-radius: 25px;
-    background-color: #f17d02;
-    color: #FFFFFF;
+    background-color: white;
+    color: #f17d02;
     text-decoration: none;
+    font-weight:bold;
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
@@ -58,7 +58,6 @@
     transform: scale(1.05);
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .home-hero {
         flex-direction: column;
@@ -72,6 +71,6 @@
     }
 
     .robot-image {
-        width: 100px; /* Smaller image for mobile */
+        width: 100px;
     }
 }

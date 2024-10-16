@@ -10,9 +10,16 @@ const Register = () => {
   const [success, setSuccess] = useState('');
 
   const handleRegister = async () => {
-    // Handle registration functionality
+    try {
+      const response = await axios.post('http://localhost:5000/register', { name, email, password });
+      setSuccess(response.data.message);
+      setError('');
+    } catch (err) {
+      setError('Registration failed');
+      setSuccess('');
+    }
   };
-
+  
   return (
     <div className="register-container">
       <h2>Register</h2>

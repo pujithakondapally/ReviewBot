@@ -1,7 +1,14 @@
-/* Navbar styles */
 .navbar {
-    background: transparent; /* Transparent background to match overall gradient */
-    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    width: calc(100% - 40px);
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
     transition: background 0.5s ease;
 }
 
@@ -40,9 +47,8 @@
     color: #FFFFFF;
 }
 
-/* Body gradient background */
 body {
-    background: linear-gradient(135deg, #ceb296, #d6a175, #c79168); /* Light Peach to Warm Orange gradient */
+    background: linear-gradient(135deg, #ceb296, #d6a175, #c79168);
     color: #333333;
     font-family: 'Poppins', sans-serif;
     margin: 0;
@@ -50,14 +56,11 @@ body {
     min-height: 100vh;
 }
 
-/* Container styles */
 .container {
     padding: 30px;
     max-width: 1200px;
     margin: auto;
 }
-
-/* Home Page Styling */
 
 .btn:hover {
     background-color: #F4A261;
@@ -65,7 +68,6 @@ body {
     transform: scale(1.05);
 }
 
-/* Footer styles */
 .footer {
     background: #E76F51;
     color: #FFFFFF;
