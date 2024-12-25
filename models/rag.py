@@ -12,13 +12,11 @@ app = Flask(__name__)
 CORS(app)
 
 
-# Meta-Llama API details
 LLAMA_API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B"
 headers = {"Authorization": "Bearer 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"}  # Replace with your API key
 
 client = InferenceClient(token="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")
 
-# Initialize global variables
 RAW_KNOWLEDGE_BASE = []
 KNOWLEDGE_VECTOR_DATABASE = None
 
@@ -51,7 +49,6 @@ def split_documents(chunk_size, knowledge_base):
 def upload_reviews():
     global RAW_KNOWLEDGE_BASE, KNOWLEDGE_VECTOR_DATABASE
 
-    # Check if reviews is a list or nested object
     reviews_data = request.json.get('reviews', [])
     if isinstance(reviews_data, dict):
         reviews = reviews_data.get('reviews', [])
@@ -65,7 +62,6 @@ def upload_reviews():
         langchainDocument(page_content=review['review']) for review in reviews
     ]
 
-    # Process and index knowledge base
     docs_processed = split_documents(512, RAW_KNOWLEDGE_BASE)
 
     embed_model = HuggingFaceEmbeddings(
@@ -82,34 +78,6 @@ def upload_reviews():
 
     return jsonify({"message": "Reviews uploaded and processed successfully."})
 
-# def upload_reviews():
-#     global RAW_KNOWLEDGE_BASE, KNOWLEDGE_VECTOR_DATABASE
-
-#     reviews = request.json.get('reviews', [])
-#     if not reviews:
-#         return jsonify({"error": "No reviews provided"}), 400
-
-#     # Convert to langchain documents
-#     RAW_KNOWLEDGE_BASE = [
-#         langchainDocument(page_content=review['text']) for review in reviews
-#     ]
-
-#     # Process and index knowledge base
-#     docs_processed = split_documents(512, RAW_KNOWLEDGE_BASE)
-
-#     embed_model = HuggingFaceEmbeddings(
-#         model_name="nomic-ai/nomic-embed-text-v1",
-#         model_kwargs={"device": "cuda", "trust_remote_code": True},
-#         encode_kwargs={"normalize_embeddings": True},
-#     )
-
-#     KNOWLEDGE_VECTOR_DATABASE = FAISS.from_documents(
-#         docs_processed,
-#         embed_model,
-#         distance_strategy=DistanceStrategy.COSINE,
-#     )
-
-#     return jsonify({"message": "Reviews uploaded and processed successfully."})
 
 @app.route('/query', methods=['POST'])
 def query_knowledge_base():

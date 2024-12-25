@@ -1,13 +1,159 @@
 from flask import Flask, request, jsonify
 from playwright.sync_api import sync_playwright
 from flask_cors import CORS
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import json
-# from rag import rag
-
+import torch
+from langchain_community.vectorstores import FAISS
+from langchain.docstore.document import Document as langchainDocument
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores.utils import DistanceStrategy
+from transformers import AutoTokenizer
+from huggingface_hub import InferenceClient
 import time
 
 app = Flask(__name__)
 CORS(app)
+
+LLAMA_API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B"
+headers = {"Authorization": "Bearer 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"}  # Replace with your API key
+
+client = InferenceClient(token="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")
+
+# Initialize global variables
+RAW_KNOWLEDGE_BASE = []
+KNOWLEDGE_VECTOR_DATABASE = None
+
+MARKDOWN_SEPARATORS = [
+    "\n#{1,6}", "```\n", "\n\\\\\\*+\n", "\n---+\n", "\n_+\n", "\n\n", "\n", " ", ""
+]
+
+
+@app.route('/senti', methods=['POST'])
+def analyze_sentiment():
+    tokenizer = AutoTokenizer.from_pretrained("siebert/sentiment-roberta-large-english")
+    model = AutoModelForSequenceClassification.from_pretrained("siebert/sentiment-roberta-large-english")
+    review_texts = request.json.get('reviewTexts') 
+    print("Review texts in flask = ",review_texts)
+    if not review_texts or not isinstance(review_texts, list):
+        return jsonify({"error": "Invalid input, expected an array of review texts."}), 400
+    
+    sentiment_results = []
+    positive_count = 0
+    negative_count = 0
+    
+    for review in review_texts:
+        # Tokenize the input review text
+        inputs = tokenizer(review, return_tensors="pt", truncation=True, padding=True, max_length=512)
+
+        # Run the model and get the output
+        with torch.no_grad():
+            outputs = model(**inputs)
+        
+        # Get the predicted sentiment (0 = negative, 1 = positive)
+        logits = outputs.logits
+        sentiment = torch.argmax(logits, dim=-1).item()
+        
+        if sentiment == 1:
+            positive_count += 1
+        else:
+            negative_count += 1
+    
+
+    return jsonify({
+        "positive": positive_count,
+        "negative": negative_count
+    })
+
+
+def split_documents(chunk_size, knowledge_base):
+    text_splitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
+        AutoTokenizer.from_pretrained("nomic-ai/nomic-embed-text-v1"),
+        chunk_size=chunk_size,
+        chunk_overlap=int(chunk_size / 10),
+        add_start_index=True,
+        strip_whitespace=True,
+        separators=MARKDOWN_SEPARATORS,
+    )
+    docs_processed = []
+    for doc in knowledge_base:
+        docs_processed += text_splitter.split_documents([doc])
+
+    unique_texts = {}
+    docs_processed_unique = []
+    for doc in docs_processed:
+        if doc.page_content not in unique_texts:
+            unique_texts[doc.page_content] = True
+            docs_processed_unique.append(doc)
+    return docs_processed_unique
+
+@app.route('/upload_reviews', methods=['POST'])
+def upload_reviews():
+    global RAW_KNOWLEDGE_BASE, KNOWLEDGE_VECTOR_DATABASE
+
+    # Check if reviews is a list or nested object
+    reviews_data = request.json.get('reviews', [])
+    if isinstance(reviews_data, dict):
+        reviews = reviews_data.get('reviews', [])
+    else:
+        reviews = reviews_data
+    
+    if not reviews:
+        return jsonify({"error": "No reviews provided"}), 400
+
+    RAW_KNOWLEDGE_BASE = [
+        langchainDocument(page_content=review['review']) for review in reviews
+    ]
+
+    # Process and index knowledge base
+    docs_processed = split_documents(512, RAW_KNOWLEDGE_BASE)
+
+    embed_model = HuggingFaceEmbeddings(
+        model_name="nomic-ai/nomic-embed-text-v1",
+        model_kwargs={"device": "cpu", "trust_remote_code": True},
+        encode_kwargs={"normalize_embeddings": True},
+    )
+
+    KNOWLEDGE_VECTOR_DATABASE = FAISS.from_documents(
+        docs_processed,
+        embed_model,
+        distance_strategy=DistanceStrategy.COSINE,
+    )
+
+    return jsonify({"message": "Reviews uploaded and processed successfully."})
+
+@app.route('/query', methods=['POST'])
+def query_knowledge_base():
+    global KNOWLEDGE_VECTOR_DATABASE
+    if KNOWLEDGE_VECTOR_DATABASE is None:
+        return jsonify({"error": "Knowledge base is not initialized."}), 400
+
+    user_query = request.json.get('question', '')
+    if not user_query:
+        return jsonify({"error": "No query provided"}), 400
+
+    retrieval_docs = KNOWLEDGE_VECTOR_DATABASE.similarity_search(query=user_query, k=2)
+    retrieved_docs_text = [doc.page_content for doc in retrieval_docs]
+    context = "\n".join(retrieved_docs_text)
+
+    prompt = f"""
+        Context: {context}
+
+        Question: {user_query}
+
+    Based on the context provided, answer the question as accurately as possible. If the answer is not found in the context, respond with "The information is not available in the provided context."""
+    messages = [{"role": "user", "content": prompt}]
+
+    completion = client.chat.completions.create(
+        model="Qwen/Qwen2.5-Coder-32B-Instruct",
+        messages=messages,
+        max_tokens=500
+    )
+    response = completion.choices[0].message["content"]
+
+    return jsonify({"answer": response})
+
 
 def toggle_sort(page):
     try:
@@ -53,6 +199,31 @@ def get_product_details(page):
     except Exception as e:
         print(f"Error occurred while getting product details: {e}")
         return {}
+
+def get_highlights(page):
+    try:
+        # Wait for the container div to load
+        page.wait_for_selector("div.DOjaWF", timeout=5000)
+
+        # Locate the container with highlights
+        highlights_div = page.query_selector("div.DOjaWF")
+        if highlights_div:
+            # Locate the div containing the "Highlights" list
+            Hlist = highlights_div.query_selector("div.xFVion")
+            if Hlist:
+                print("In the list div")
+                # Extract all list items under the ul element
+                ul_element = Hlist.query_selector("ul")
+                if ul_element:
+                    print("In the list element, extracting list items")
+                    highlights = [li.inner_text() for li in ul_element.query_selector_all("li._7eSDEz")]
+                    return highlights
+        return []
+    except Exception as e:
+        print(f"Error occurred while getting highlights: {e}")
+        return []
+
+
 
 def get_specifications(page):
     try:
@@ -211,6 +382,7 @@ def get_reviews(page):
     return reviews_and_ratings
 
 
+
 @app.route('/scrape', methods=['POST'])
 def scrape():
     url = request.form.get('url')
@@ -226,16 +398,18 @@ def scrape():
 
             product_details = get_product_details(page)
             specs = get_specifications(page)
-
+            high = get_highlights(page)
             reviews = get_reviews(page)
             
 
             response = {
                 'product_details': product_details,
                 'reviews': reviews,
-                'specifications': specs
+                'specifications':specs,
+                'highlights':high
             }
 
+            print(response)
             browser.close()
             return jsonify(response)
 

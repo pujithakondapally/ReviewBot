@@ -19,28 +19,19 @@ const LinkInput = () => {
       const formData = new URLSearchParams();
       formData.append("url", url);
 
-      // Step 1: Scrape product data
-      const res = await axios.post("http://localhost:8000/scrape", formData, {
+      const res = await axios.post("http://localhost:5000/scrape", formData, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
 
-      const { product_details, reviews } = res.data;
-
-      const reviewsArray = reviews
-        .map((r) => r.review || "") 
-        .map((review) =>
-          review
-            .replace(/READ MORE/gi, "") 
-            .replace(/\.+$/, "") 
-            .trim() 
-        )
-        .filter((review) => review.length > 0); 
-
-      // Step 2: Sentiment analysis
+      const { product_details, reviews,specifications,highlights } = res.data;
+      console.log(res.data);
+  
+      const reviewsArray = reviews.map((review)=>{return review["review"]})
+      
       let positive = 0,
         negative = 0;
       try {
-        const sentimentResponse = await axios.post("http://localhost:5001/senti", {
+        const sentimentResponse = await axios.post("http://localhost:5000/senti", {
           reviewTexts: reviewsArray,
         });
         const { positive: posCount, negative: negCount } = sentimentResponse.data;
@@ -50,18 +41,28 @@ const LinkInput = () => {
         console.error("Error in sentiment analysis:", error);
       }
 
-      // Step 3: Summarization
       let summary = "No summary available.";
       try {
         const summaryResponse = await axios.post("http://localhost:4000/summarize", {
-          reviews: reviewsArray.map((review) => ({ review })),
+          reviews: reviewsArray,
         });
-        summary = summaryResponse.data.summary.generated_text || summary;
+        console.log(summaryResponse);
+        summary = summaryResponse.data.summary || summary;
       } catch (error) {
         console.error("Error in summarization:", error);
       }
 
-      // Step 4: Navigate to Product Description page
+      try {
+        const response = await axios.post("http://localhost:5000/upload_reviews", {
+          reviews: res.data,
+        });
+        console.log("Uploaded reviews");
+      } catch (error) {
+        console.error("Error in uploading reviews:", error);
+      }
+
+
+
       navigate("/product", {
         state: {
           product: {
@@ -73,11 +74,12 @@ const LinkInput = () => {
             neg: negative,
             high: product_details.highlights || [],
             rating: product_details.rating || "No rating",
-            reviews: reviewsArray, // Reviews in the desired format
+            reviews: reviewsArray, 
           },
         },
       });
     } catch (err) {
+      console.log(err);
       setError(err.response?.data || "Error fetching product details.");
     } finally {
       setLoading(false);

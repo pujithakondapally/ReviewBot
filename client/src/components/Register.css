@@ -1,3 +1,9 @@
+.register-page{
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+}
 .register-container {
   width: 350px;
   margin: auto;
@@ -20,9 +26,10 @@
 .register-container h2 {
   font-family: 'Poppins', sans-serif;
   font-size: 24px;
-  color: bblack;
+  color: black;
   text-align: center;
   margin-bottom: 20px;
+  font-weight:bold;
 }
 
 .register-container input {

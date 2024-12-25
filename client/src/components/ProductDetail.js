@@ -7,6 +7,9 @@ const ProductDetail = () => {
   const { state } = useLocation();
   const { product } = state || {};
   const [message, setMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState([
+    { isBot: true, text: "Hello! How can I help you today?" },
+  ]);
 
   if (!product) {
     return <div>Loading...</div>;
@@ -23,6 +26,37 @@ const ProductDetail = () => {
         ],
       },
     ],
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+
+    const userMessage = { isBot: false, text: message };
+    setChatHistory((prev) => [...prev, userMessage]);
+
+    try {
+      const response = await fetch("http://localhost:5000/query", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: message }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const botMessage = { isBot: true, text: data.answer };
+        setChatHistory((prev) => [...prev, botMessage]);
+      } else {
+        const errorMessage = { isBot: true, text: "Error: Could not get a response from the server." };
+        setChatHistory((prev) => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      const errorMessage = { isBot: true, text: "Error: Network issue or server unavailable." };
+      setChatHistory((prev) => [...prev, errorMessage]);
+    }
+
+    setMessage("");
   };
 
   return (
@@ -64,11 +98,19 @@ const ProductDetail = () => {
             <div className="prod-chatbot-section">
               <h2 className="prod-chatbot-title">Product Assistant</h2>
               <div className="prod-chatbot-wrapper">
-                <div className="prod-chatbot-messages">
-                  <div className="bg-blue-100 p-3 inline-block rounded-lg">
-                    Hello! How can I help you today?
-                  </div>
-                </div>
+              <div className="prod-chatbot-messages">
+  {chatHistory.map((chat, index) => (
+    <div
+      key={index}
+      className={`chat-message ${chat.isBot ? "bot" : "user"}`}
+    >
+      <div className={`chat-bubble ${chat.isBot ? "bot" : "user"}`}>
+        {chat.text}
+      </div>
+    </div>
+  ))}
+</div>
+
                 <div className="prod-chatbot-input">
                   <input
                     type="text"
@@ -76,7 +118,7 @@ const ProductDetail = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
                   />
-                  <button>Send</button>
+                  <button onClick={handleSendMessage}>Send</button>
                 </div>
               </div>
             </div>
