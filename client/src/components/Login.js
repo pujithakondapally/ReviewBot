@@ -18,6 +18,8 @@ const Login = ({ onLogin }) => {
       setSuccess(response.data.message);
       setError('');
       onLogin(response.data.username); 
+      localStorage.setItem('username', response.data.username);
+      localStorage.setItem('isAuthenticated', true);
       navigate('/'); 
     } catch (err) {
       setError('Login failed');

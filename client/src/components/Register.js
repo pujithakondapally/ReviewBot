@@ -3,7 +3,7 @@ import axios from 'axios';
 import './Register.css';
 
 const Register = () => {
-  const [name, setName] = useState('');
+  const [username, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -11,7 +11,7 @@ const Register = () => {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post('http://localhost:4000/register', { name, email, password });
+      const response = await axios.post('http://localhost:4000/register', { username, email, password });
       setSuccess(response.data.message);
       setError('');
     } catch (err) {
@@ -27,8 +27,8 @@ const Register = () => {
         <input
           type="text"
           placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={username}
+          onChange={(e) => setUserName(e.target.value)}
         />
         <input
           type="email"

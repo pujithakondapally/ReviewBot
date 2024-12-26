@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
@@ -14,16 +14,28 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
-  const [details,setDetails] = useState({});
+  const [details, setDetails] = useState({});
 
-  const handleLogin = (user) => {
+  useEffect(() => {
+    // Initialize authentication state from localStorage
+    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
+    const storedUsername = localStorage.getItem('username') || '';
+    setIsAuthenticated(authStatus);
+    setUsername(storedUsername);
+  }, []);
+
+  const handleLogin = (username) => {
     setIsAuthenticated(true);
-    setUsername(user);
+    setUsername(username);
+    localStorage.setItem('isAuthenticated', true);
+    localStorage.setItem('username', username);
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUsername('');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('username');
   };
 
   return (
@@ -35,7 +47,7 @@ function App() {
           path="/link-input"
           element={
             isAuthenticated ? (
-              <LinkInput props={setDetails}/>
+              <LinkInput props={setDetails} />
             ) : (
               <Navigate to="/login" state={{ message: 'Please login to analyze reviews through a link.' }} />
             )

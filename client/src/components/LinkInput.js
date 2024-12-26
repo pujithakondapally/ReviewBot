@@ -61,6 +61,22 @@ const LinkInput = () => {
         console.error("Error in uploading reviews:", error);
       }
 
+      const username = localStorage.getItem("username");
+      console.log(username); // Retrieve the username
+
+      try {
+        const response = await axios.post('http://localhost:4000/products', {
+          productName: product_details.name,
+          productPrice: product_details.price,
+          productImage: product_details.image,
+          productRating: product_details.rating,
+          productLink: url,
+          username:username, // Include username in the request
+        });
+        console.log('Product saved:', response.data);
+      } catch (error) {
+        console.error('Error saving product:', error);
+      }
 
 
       navigate("/product", {
@@ -85,6 +101,7 @@ const LinkInput = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="link-input-container">
