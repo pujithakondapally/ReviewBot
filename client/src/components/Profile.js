@@ -6,6 +6,9 @@ import './Profile.css';
 const Profile = () => {
   const [products, setProducts] = useState([]);
   const username = localStorage.getItem("username"); 
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();  // Initialize the navigate function
 
   useEffect(() => {
@@ -23,6 +26,83 @@ const Profile = () => {
 
     fetchProducts();
   }, [username]);
+
+    const handleReanalyze = async (e,product) => {
+      e.preventDefault();
+      setLoading(true);
+      setError(null);
+  
+      try {
+        const formData = new URLSearchParams();
+        formData.append("url", product.productLink);
+  
+        const res = await axios.post("http://localhost:5000/scrape", formData, {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+  
+        const { product_details, reviews,specifications,highlights } = res.data;
+        console.log(res.data);
+    
+        const reviewsArray = reviews.map((review)=>{return review["review"]})
+        
+        let positive = 0,
+          negative = 0;
+        try {
+          const sentimentResponse = await axios.post("http://localhost:5000/senti", {
+            reviewTexts: reviewsArray,
+          });
+          const { positive: posCount, negative: negCount } = sentimentResponse.data;
+          positive = posCount;
+          negative = negCount;
+        } catch (error) {
+          console.error("Error in sentiment analysis:", error);
+        }
+  
+        let summary = "No summary available.";
+        try {
+          const summaryResponse = await axios.post("http://localhost:4000/summarize", {
+            reviews: reviewsArray,
+          });
+          console.log(summaryResponse);
+          summary = summaryResponse.data.summary || summary;
+        } catch (error) {
+          console.error("Error in summarization:", error);
+        }
+  
+        try {
+          const response = await axios.post("http://localhost:5000/upload_reviews", {
+            reviews: res.data,
+          });
+          console.log("Uploaded reviews");
+        } catch (error) {
+          console.error("Error in uploading reviews:", error);
+        }
+  
+        const username = localStorage.getItem("username");
+        console.log(username); // Retrieve the username
+  
+        navigate("/product", {
+          state: {
+            product: {
+              image: product_details.image || null,
+              name: product_details.name || "Unknown Product",
+              price: product_details.price || "Price not available",
+              sumRes: summary,
+              pos: positive,
+              neg: negative,
+              high: product_details.highlights || [],
+              rating: product_details.rating || "No rating",
+              reviews: reviewsArray, 
+            },
+          },
+        });
+      } catch (err) {
+        console.log(err);
+        setError(err.response?.data || "Error fetching product details.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <div className="profile-container">
@@ -51,13 +131,11 @@ const Profile = () => {
                 </a>
               </div>
               <button
-                className="reanalyze-button"
-                onClick={() => {
-                  // Navigate to ProductDetail page, passing product data as state
-                  navigate("/product", { state: { product: product } });
-                }}
-              >
-                Re-analyze
+                  className={`reanalyze-button ${loading ? 'loading' : ''}`}
+                  onClick={(e) => handleReanalyze(e, product)}
+                  disabled={loading}
+                >
+                  {loading ? 'Re-analyzing...' : 'Re-analyze'}
               </button>
             </div>
           ))

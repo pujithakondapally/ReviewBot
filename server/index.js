@@ -85,7 +85,6 @@ app.post("/summarize", async (req, res) => {
   }
 });
 
-
 app.post('/products', async (req, res) => {
   const { productName, productPrice, productImage, productRating, productLink, username } = req.body;
 
@@ -272,7 +271,7 @@ app.get("/analyze", async (req, res) => {
 
   } catch (err) {
       console.log(err);
-      res.status(500).json({ error: "Error analyzing the product link." });
+      res.status(500).json({ error: "Error analyzing the product link.",message:err });
   }
 });
 

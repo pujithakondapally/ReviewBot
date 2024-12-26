@@ -22,7 +22,7 @@ h2 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
-  justify-items: center; 
+  justify-items: center;
 }
 
 .product-card {
@@ -31,7 +31,11 @@ h2 {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s ease;
-  width: 100%; 
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .product-card:hover {
@@ -40,21 +44,14 @@ h2 {
 
 .product-image {
   width: 100%;
-  height: 200px;  
-  object-fit: cover;  
+  height: 200px;
+  object-fit: cover;
   border-bottom: 2px solid #f0f0f0;
-}
-
-
-.product-card img {
-  display: block;
-  margin: 0 auto;
-  max-width: 100%;  
-  object-fit: contain;
 }
 
 .product-info {
   padding: 15px;
+  text-align: center;
 }
 
 .product-info h3 {
@@ -72,7 +69,7 @@ h2 {
 .product-link {
   display: inline-block;
   text-decoration: none;
-  color: #007bff;
+  color: #f17d02;
   font-weight: bold;
   margin-top: 10px;
 }
@@ -85,8 +82,8 @@ h2 {
   font-size: 1rem;
   cursor: pointer;
   border-radius: 5px;
-  width: 100%;
   margin-top: 10px;
+  width: 100%;
   transition: background-color 0.3s ease;
 }
 
@@ -102,4 +99,44 @@ h2 {
   text-align: center;
   font-size: 1.2rem;
   color: #999;
+}
+
+.reanalyze-button {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 25px;
+  color: white;
+  background-color: #f17d02;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  text-align: center;
+  max-width: 200px;
+  border: none;
+  cursor: pointer;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.reanalyze-button:hover {
+  background-color: #F4A261;
+  transform: scale(1.05);
+  color: white;
+}
+
+/* Loading and Reanalyzing styles */
+.reanalyze-button.loading {
+  background-color: #F4A261;
+  color: white;
+  pointer-events: none;
+}
+
+.reanalyze-button.loading:hover {
+  background-color: #F4A261;
+  transform: none;
+}
+
+.reanalyze-button.loading:after {
+  font-weight: bold;
 }
